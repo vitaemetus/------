@@ -14,7 +14,7 @@ class Spring:
         self.k = k
 
 def calc(p1, s1):
-    # movement
+    # динамика
     current_x = p1.x
     s1.x = p1.x
     p1.x = 2*p1.x - np.divide(s1.x*s1.k, p1.m) * (dt**2) - p1.x0
@@ -22,7 +22,7 @@ def calc(p1, s1):
     p1.v = np.divide(abs(p1.x - p1.x0), dt)
 
 def calc_E(p1, s1):
-    # energy
+    # энергия
     E = (p1.m * p1.v**2 + s1.k * s1.x**2) / 2
     return(E)
 
@@ -32,5 +32,5 @@ p1 = Particle(1, 0, 0.1)
 s1 = Spring(p1.x, 0.5)
 
 while ongoing:
-    calc(p1, s1)
-    print(calc_E(p1, s1))
+    calc(p1, s1)    # шаг интегрирования
+    print(calc_E(p1, s1))   # вывод механической энергии системы
