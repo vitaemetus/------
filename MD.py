@@ -11,8 +11,9 @@ sigma = 1
 epsilon = 1
 cell_s = 10*sigma
 cell_n = 27
-Ep = []
-Ek = []
+Ep = [0]
+Ek = [0]
+T = [0]
 pos_file = open('pos.xyz', 'w')
 
 class Particle():
@@ -49,16 +50,22 @@ def forces_update(particles):
                 p1.f = p1.f + ((24*epsilon*(2*s**2 - s)) / (r_norm**2)) * r
 
 def energy_update(particles):
-    Ek = Ep = 0
+    Ek = 0
+    Ep = 0
     for p1 in particles:
         p1.f = np.array([0, 0, 0])
-        Ek += np.linalg.norm(p1.v)**2*p1.m/2
+        Ek += np.linalg.norm((p1.pos - p1.pos0) / dt)**2*p1.m/2
         for p2 in particles:
             if p1 != p2:
                 r = np.array(p2.pos - p1.pos)
+                for axis in range(3):
+                    if r[axis] > cell_s / 2:
+                        r[axis] -= cell_s
+                    if r[axis] < -cell_s / 2:
+                        r[axis] += cell_s
                 r_norm = np.linalg.norm(r)
                 s = (sigma / r_norm)**6
-                Ep += 4*epsilon*(s**2 - s)
+                Ep -= 4*epsilon*(s**2 - s)
     return(Ek, Ep/2)
                 
 
@@ -70,28 +77,37 @@ def plot_update(data):
     forces_update(particles)
     pos_update(particles)
 
+    E_vals = energy_update(particles)
+    Ek.append(E_vals[0])
+    Ep.append(E_vals[1])
+    T.append(T[len(T) - 1] + dt)
+
     #cell borders
     for axis in range(3):
         for p in range(number_of_particles):
             if particles[p].pos[axis] > cell_s / 2:
                 particles[p].pos[axis] -= cell_s
                 particles[p].pos0[axis] -= cell_s
-                print(p, "teleported to", particles[p].pos[axis] / sigma)
             if particles[p].pos[axis] < -cell_s / 2:
                 particles[p].pos[axis] += cell_s
                 particles[p].pos0[axis] += cell_s
-                print(p, "teleported to", particles[p].pos[axis] / sigma)
     
     #input particles coords into a data list
     for axis in range (3):
         for p in range (number_of_particles):
             data[axis][p] = particles[p].pos[axis]        
 
-    ax1.clear()
-    ax1.set_xlim3d([-cell_s/2, cell_s/2])
-    ax1.set_ylim3d([-cell_s/2, cell_s/2])
-    ax1.set_zlim3d([-cell_s/2, cell_s/2])
-    img=[ax1.scatter3D(data[0],data[1],data[2],c='red', alpha = 1,s=10)]
+    for i in range(3):
+        ax[i].clear()
+    ax[0].set_xlim3d([-cell_s/2, cell_s/2])
+    ax[0].set_ylim3d([-cell_s/2, cell_s/2])
+    ax[0].set_zlim3d([-cell_s/2, cell_s/2])
+    img=[ax[0].scatter3D(data[0],data[1],data[2],c='red', alpha = 1,s=10),
+         ax[1].plot(T, Ek, label = 'Kinetic energy'),
+         ax[1].plot(T, Ep, label = 'Potential energy'),
+         ax[1].plot(T, np.array(Ep) + np.array(Ek), label = 'Full energy')]
+
+    ax[1].legend(loc = 'upper left')
     pos_file.write("\n")
     return img
 
@@ -101,9 +117,15 @@ for i in range(3):
         for k in range(3):
             if len(particles) >= number_of_particles:
                 break
-            particles.append(Particle(np.array([-cell_s/4 + cell_s/4 * axis for axis in [i, j, k]]), 
-                                    np.array([random.randint(-10, 10)*sigma/10 for axis in range(3)])))
-            print(len(particles) - 1, particles[len(particles) - 1].pos)
+            particles.append(Particle(np.array([-cell_s/4 + cell_s/4 * axis for axis in [i, j, k]]),
+                                      np.array([random.randint(-10, 10)*sigma/10 for axis in range(3)])))
+
+#np.array([random.randint(-10, 10)*sigma/10 for axis in range(3)])
+
+#energy initialization
+E_vals = energy_update(particles)
+Ek[0] = E_vals[0]
+Ep[0] = E_vals[1]
 
 # data array initialization
 data = [[[0 for p in range(number_of_particles)] for axis in range(3)]]
@@ -113,6 +135,9 @@ for axis in range (3):
 
 #technical stuff: initiation of figure etc
 fig = plt.figure()
-ax1 = fig.add_subplot(1,1,1, projection='3d')
-line_ani = animation.FuncAnimation(fig, plot_update, data, blit=False)
+ax0 = fig.add_subplot(1,2,1, projection='3d')
+ax1 = fig.add_subplot(2,2,2)
+ax2 = fig.add_subplot(2,2,4)
+ax = [ax0, ax1, ax2]
+line_ani = animation.FuncAnimation(fig, plot_update, data, interval = 1, blit=False)
 plt.show()
