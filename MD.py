@@ -6,7 +6,7 @@ import random
 number_of_particles = 27
 particles = []
 prticles_clone = []
-dt = 0.005
+dt = 0.01
 sigma = 1
 epsilon = 1
 cell_s = 10*sigma
@@ -70,23 +70,22 @@ def plot_update(data):
     forces_update(particles)
     pos_update(particles)
 
-    #input particles coords into a data list
-    for axis in range (3):
-        for p in range (number_of_particles):
-            data[axis][p] = particles[p].pos[axis]
-
     #cell borders
     for axis in range(3):
         for p in range(number_of_particles):
-            if data[axis][p] > cell_s / 2:
+            if particles[p].pos[axis] > cell_s / 2:
                 particles[p].pos[axis] -= cell_s
                 particles[p].pos0[axis] -= cell_s
                 print(p, "teleported to", particles[p].pos[axis] / sigma)
-            if data[axis][p] < -cell_s / 2:
+            if particles[p].pos[axis] < -cell_s / 2:
                 particles[p].pos[axis] += cell_s
                 particles[p].pos0[axis] += cell_s
                 print(p, "teleported to", particles[p].pos[axis] / sigma)
-        
+    
+    #input particles coords into a data list
+    for axis in range (3):
+        for p in range (number_of_particles):
+            data[axis][p] = particles[p].pos[axis]        
 
     ax1.clear()
     ax1.set_xlim3d([-cell_s/2, cell_s/2])
@@ -100,12 +99,14 @@ def plot_update(data):
 for i in range(3):
     for j in range(3):
         for k in range(3):
+            if len(particles) >= number_of_particles:
+                break
             particles.append(Particle(np.array([-cell_s/4 + cell_s/4 * axis for axis in [i, j, k]]), 
                                     np.array([random.randint(-10, 10)*sigma/10 for axis in range(3)])))
-            print(particles[i+j+k].pos)
+            print(len(particles) - 1, particles[len(particles) - 1].pos)
 
 # data array initialization
-data = np.array([[[0 for p in range(number_of_particles)] for axis in range(3)]])
+data = [[[0 for p in range(number_of_particles)] for axis in range(3)]]
 for axis in range (3):
     for p in range (number_of_particles):
         data[0][axis][p] = particles[p].pos[axis]
