@@ -5,10 +5,10 @@ import random
 
 number_of_particles = 27
 particles = []
-prticles_clone = []
-dt = 0.01
-sigma = 1
-epsilon = 1
+dt = 1e-2
+sigma = 0.3345e-9 # m
+k = 1.381e-23 # J*K^-1
+epsilon = 125.7 * k # J
 cell_s = 10*sigma
 cell_n = 27
 Ep = [0]
@@ -23,7 +23,7 @@ class Particle():
         self.v = velocity
         self.pos0 = self.pos - self.v*dt
         self.f = np.array([0.0, 0.0, 0.0])
-        self.m = 1
+        self.m = 6.634e-26
 
 def pos_update(particles):
     for i, p in enumerate(particles):
@@ -139,5 +139,5 @@ ax0 = fig.add_subplot(1,2,1, projection='3d')
 ax1 = fig.add_subplot(2,2,2)
 ax2 = fig.add_subplot(2,2,4)
 ax = [ax0, ax1, ax2]
-line_ani = animation.FuncAnimation(fig, plot_update, data, interval = 1, blit=False)
+line_ani = animation.FuncAnimation(fig, plot_update, data, interval = 0, blit=False)
 plt.show()
